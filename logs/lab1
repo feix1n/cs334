@@ -1,3 +1,15 @@
 Lab 1
 
-1. Turns out case isn't flush with Raspberry Pi, so to allow the Raspberry Pi to connect to the interface, take it out.
+0. Set up the Github stuff!
+
+1. Turns out case isn't flush with Raspberry Pi, so to allow the Raspberry Pi to connect to the monitor, take it out.
+IP: 10.67. <- forgot to write it down
+
+2. It's better to do key generation on WSL since Windows doesn't have the same ~/.ssh file structure :/. Following either links below work (they kinda say the same thing)
+https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+or
+https://ionutbanu.medium.com/setting-up-key-pair-ssh-on-raspberry-pi-9822b20037a0 
+
+Don't rename the public key file, ssh only recognizes certain names (such as id_rsa).
+
+3. Started, but did not finish working on the bash scrip to update everything.
