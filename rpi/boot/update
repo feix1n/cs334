@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#get IP address
+IP = (hostname -I)
+DATE = (date)
+
+# if there is a network connection
+
+# log all IPs with sed?? 
+# echo("$DATE IP Address is $IP") >> cs334/rpi/boot/update
+# what's the actual file name lol & get the ip thru grep?????
+echo("Current IP: \n $IP") >> cs334/rpi/boot/ip.md
+
+# the git commands.
