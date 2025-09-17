@@ -16,4 +16,4 @@ cp -r ~/.config configcopy
 
 git add .
 git commit -m "update IP address"
-git push origin
+git push --set-upstream origin origin
