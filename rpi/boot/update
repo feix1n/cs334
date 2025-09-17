@@ -1,14 +1,15 @@
 #!/bin/bash
 
 #get IP address
-IP = $(hostname -I)
-DATE = $(date)
+IP=$(hostname -I)
+DATE=$(date)
 
 # if there is a network connection
 
 # log all IPs with sed?? 
-# echo("$DATE IP Address is $IP") >> cs334/rpi/boot/update
+echo "$DATE IP Address is $IP" >> ~/cs334/rpi/boot/ip.md
 # what's the actual file name lol & get the ip thru grep?????
-echo("$IP") >> cs334/rpi/boot/ip.md
+echo "$IP" >> ~/cs334/rpi/boot/ip.md
 
-# the git commands.
+# copy the config files over
+cp -r ~/.config configcopy
