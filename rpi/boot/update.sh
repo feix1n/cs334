@@ -15,6 +15,7 @@ echo "1" >> ~/cs334/rpi/boot/ip.md
 # copy the config files over
 cp -r ~/.config configcopy
 
+cd ~/cs334
 git add .
 git commit -m "update IP address"
 git push origin
