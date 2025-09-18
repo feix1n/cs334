@@ -10,6 +10,15 @@ const lngColors = {
   latin: { hue: 47, sat: 90, light: 51, max: 71 }    // yellow
 };
 
+// t for beizer curve, to which symbol, from which symbol, the coordinates of the ball
+let ballmrsl = {};
+let ballindo = {};
+let balllatin = {};
+let ballengl = {};
+
+// circle rescaling
+let circleRadius;
+
 let Table;
 
 // load csv values into table
@@ -98,17 +107,57 @@ function calculate_values() {
   engl["entropy"] = round(entropy_engl, 5);
 }
 
+function ballInit(ball, lang) {
+  if (!ball.from) {
+    ball.from = getRandSymbol(lang);
+  } else {
+    ball.from = ball.to;
+  }
+
+  // Pick a new destination that's NOT the same as from
+  let newTo;
+  do {
+    newTo = getRandSymbol(lang);
+  } while (newTo === ball.from);
+  ball.to = newTo;
+
+  // perserve tail
+  if (!ball.tail) ball.tail = [];
+
+  // make glows
+  ball.glowTimer = 20;
+
+  // reset cycle
+  ball.t = 0;
+
+  if (!ball.ctrl) ball.ctrl = {};
+  if (!ball.pos) ball.pos = {};
+
+  const fromLetter = lang[ball.from];
+  const toLetter = lang[ball.to];
+
+  // Set random control points near 'from' point
+  ball.ctrl.x1 = fromLetter.x + random(-windowWidth * 0.1, windowWidth * 0.1);
+  ball.ctrl.y1 = fromLetter.y + random(-windowHeight * 0.1, windowHeight * 0.1);
+  ball.ctrl.x2 = fromLetter.x + random(-windowWidth * 0.1, windowWidth * 0.1);
+  ball.ctrl.y2 = fromLetter.y + random(-windowHeight * 0.1, windowHeight * 0.1);
+}
+
 
 function setup() {
   colorMode(HSL);
   calculate_values();
-  print(engl, indo, latin, mrsl);
-
   createCanvas(windowWidth, windowHeight);
+  updateCircleRadius();
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  updateCircleRadius();
+}
+
+function updateCircleRadius() {
+  circleRadius = min(windowWidth, windowHeight) * 0.01;
 }
 
 function drawCodes(lang, slang, yoffset, yheight) {
@@ -150,37 +199,97 @@ function drawCodes(lang, slang, yoffset, yheight) {
     x += spacing + (entropy);
     x = constrain(x, 0, (windowWidth - 5));
 
+    // save the info
+    letter.x = x;
+    letter.y = y;
   }
 }
 
+function getRandSymbol(lang) {
+  let freqweight = Object.keys(lang).filter(k => k !== "entropy");
+  // sum since it's not exactly 1 
+  let total = 0;
+  for (let i = 0; i < freqweight.length; i++) {
+    let freq = lang[freqweight[i]].freq;
+    total += freq;
+  }
+
+  // choose random frequency 
+  let r = random(0, total);
+  // walk until matching frequency 
+  for (let i = 0; i < freqweight.length; i++) {
+    let freq = lang[freqweight[i]].freq;
+    if (r < freq) { return freqweight[i]; } r -= freq;
+  } return freqweight[0];
+}
+
+function ballMove(lang, ball, color) {
+  if (!lang[ball.from] || !lang[ball.to]) return;
+
+  ball.t += 0.01 * lang[ball.from].wetp;
+
+  if (ball.t >= 1.0) {
+    ballInit(ball, lang);
+    ball.glow = 15;
+  }
+
+  ball.pos.x = bezierPoint(
+    lang[ball.from].x, ball.ctrl.x1, ball.ctrl.x2, lang[ball.to].x, ball.t
+  );
+  ball.pos.y = bezierPoint(
+    lang[ball.from].y, ball.ctrl.y1, lang[ball.to].y, ball.ctrl.y2, ball.t
+  );
+
+  // add current position to tail
+  if (!ball.tail) ball.tail = [];
+  ball.tail.push({ x: ball.pos.x, y: ball.pos.y });
+  if (ball.tail.length > 30) ball.tail.shift();
+
+  // draw the past balls
+  for (let i = 0; i < ball.tail.length; i++) {
+    let pos = ball.tail[i];
+    let alpha = map(i, 0, ball.tail.length, 0.1, 0.8);
+    fill(color.hue, color.sat, color.max - 20, alpha);
+    noStroke();
+    ellipse(pos.x, pos.y, circleRadius, circleRadius);
+  }
+
+  // draw current ball
+  fill(color.hue, color.sat, color.max - 20);
+  noStroke();
+  ellipse(ball.pos.x, ball.pos.y, circleRadius * 2, circleRadius * 2);
+
+  // glowies
+  if (ball.glow > 0) {
+    fill(color.hue, color.sat, color.max, ball.glow / 10 * 0.5);
+    ellipse(ball.pos.x, ball.pos.y, circleRadius * 4, circleRadius * 4);
+    ball.glow -= 0.3;
+  }
+}
+
+
 function draw() {
-  background(0, 1, 16);
+  background(0, 1, 16,);
 
   drawCodes(mrsl, 'mrsl', 20, windowHeight * 0.9);
   drawCodes(indo, 'indo', 20, windowHeight * 0.9);
   drawCodes(latin, 'latin', 20, windowHeight * 0.9);
   drawCodes(engl, 'engl', 20, windowHeight * 0.9);
 
-  // let symbolsorted_mrsl = Object.fromEntries(Object.entries(mrsl).filter(key => key !== "entropy").sort(([, a], [, b]) => a.info - b.info));
-  // let symbolsorted_indo = Object.fromEntries(Object.entries(indo).filter(key => key !== "entropy").sort(([, a], [, b]) => a.info - b.info));
-  // let symbolsorted_latin = Object.fromEntries(Object.entries(latin).filter(key => key !== "entropy").sort(([, a], [, b]) => a.info - b.info));
-  // let symbolsorted_engl = Object.fromEntries(Object.entries(engl).filter(key => key !== "entropy").sort(([, a], [, b]) => a.info - b.info));
+  if (!ballmrsl.to) ballInit(ballmrsl, mrsl);
 
-  // let wetpsorted_mrsl = Object.fromEntries(Object.entries(mrsl).filter(key => key !== "entropy").sort(([, a], [, b]) => a.wtep - b.wetp));
-  // let wetpsorted_indo = Object.fromEntries(Object.entries(indo).filter(key => key !== "entropy").sort(([, a], [, b]) => a.wetp - b.wetp));
-  // let wetpsorted_latin = Object.fromEntries(Object.entries(latin).filter(key => key !== "entropy").sort(([, a], [, b]) => a.wetp - b.wetp));
-  // let wetpsorted_engl = Object.fromEntries(Object.entries(engl).filter(key => key !== "entropy").sort(([, a], [, b]) => a.wetp - b.wetp));
+  ballMove(mrsl, ballmrsl, lngColors['mrsl']);
 
-  // drawCodes(symbolsorted_mrsl, 'mrsl', 0, windowHeight / 4);
-  // drawCodes(symbolsorted_indo, 'indo', 0, windowHeight / 4);
-  // drawCodes(symbolsorted_latin, 'latin', 0, windowHeight / 4);
-  // drawCodes(symbolsorted_engl, 'engl', 0, windowHeight / 4);
+  if (!ballindo.to) ballInit(ballindo, indo);
 
-  // drawCodes(wetpsorted_mrsl, 'mrsl', 2 * (windowHeight / 3), windowHeight / 3);
-  // drawCodes(wetpsorted_indo, 'indo', 2 * (windowHeight / 3), windowHeight / 3);
-  // drawCodes(wetpsorted_latin, 'latin', 2 * (windowHeight / 3), windowHeight / 3);
-  // drawCodes(wetpsorted_engl, 'engl', 2 * (windowHeight / 3), windowHeight / 3);
+  ballMove(indo, ballindo, lngColors['indo']);
 
+  if (!balllatin.to) ballInit(balllatin, latin);
 
+  ballMove(latin, balllatin, lngColors['latin']);
+
+  if (!ballengl.to) ballInit(ballengl, engl);
+
+  ballMove(engl, ballengl, lngColors['engl']);
 }
 
