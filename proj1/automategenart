@@ -1,0 +1,4 @@
+#!/bin/bash
+export DISPLAY=:0
+cd ~/cs334/proj1
+python3 -m http.server & firefox --kiosk http://0.0.0.0:8000/
