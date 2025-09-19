@@ -6,3 +6,6 @@
  5 files changed, 25 insertions(+), 18 deletions(-)
 [main 08ffcfc] update IP address
  2 files changed, 4 insertions(+)
+[main 4ee4793] update IP address
+ 2 files changed, 7 insertions(+)
+ create mode 100755 proj1/automategenart
