@@ -10,12 +10,12 @@ DATE=$(date)
 echo "$DATE IP Address is $IP" >> ~/cs334/rpi/boot/ip.md
 # what's the actual file name lol & get the ip thru grep?????
 echo "$IP" >> ~/cs334/rpi/boot/ip.md
-echo "works?" >> ~/cs334/rpi/boot/ip.md
 
 # copy the config files over
-cp -r ~/.config configcopy
+cp -r ~/.config ~/cs334/rpi/boot/configcopy
 
 cd ~/cs334
+git pull
 git add .
 git commit -m "update IP address"
 git push origin
