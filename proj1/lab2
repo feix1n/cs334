@@ -1,0 +1,5 @@
+Writing Script to Update IP address:
+I learned that there can be no spaces between bash variables. I also added date so I could see when and what IP address I logged in on the pi.
+
+Automating Script to run on boot:
+I used crontabs to automate the bash script running on reboot! It was quite convenient, and I ran into no issues
