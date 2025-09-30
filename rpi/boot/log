@@ -1363,3 +1363,40 @@ Already up to date.
  create mode 100644 rpi/boot/configcopy/.config/chromium/Default/Sessions/Tabs_13403300514344766
  create mode 100644 rpi/boot/configcopy/.config/chromium/extensions_crx_cache/88f606ee50292aa3e2e864c9fd4eb87c2e1ae6b6a7bc3567ea732eecb3b0dcaf
 Already up to date.
+[main 9d899a7] update IP address
+ 106 files changed, 8755 insertions(+), 84 deletions(-)
+ create mode 100644 rpi/boot/configcopy/.config/chromium/CertificateRevocation/10058/LICENSE
+ create mode 100644 rpi/boot/configcopy/.config/chromium/CertificateRevocation/10058/_metadata/verified_contents.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/CertificateRevocation/10058/crl-set
+ create mode 100644 rpi/boot/configcopy/.config/chromium/CertificateRevocation/10058/manifest.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/Crowd Deny/2025.9.25.61/Preload Data
+ create mode 100644 rpi/boot/configcopy/.config/chromium/Crowd Deny/2025.9.25.61/_metadata/verified_contents.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/Crowd Deny/2025.9.25.61/manifest.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/Default/Platform Notifications/LOG.old
+ create mode 100644 rpi/boot/configcopy/.config/chromium/Default/Sessions/Session_13403560142761128
+ create mode 100644 rpi/boot/configcopy/.config/chromium/Default/Sessions/Tabs_13403560143211950
+ create mode 100644 rpi/boot/configcopy/.config/chromium/OnDeviceHeadSuggestModel/20250910.807035025.14/_metadata/verified_contents.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/OnDeviceHeadSuggestModel/20250910.807035025.14/cr_en-gb_500000_index.bin
+ create mode 100644 rpi/boot/configcopy/.config/chromium/OnDeviceHeadSuggestModel/20250910.807035025.14/manifest.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/OptimizationHints/542/_metadata/verified_contents.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/OptimizationHints/542/manifest.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/OptimizationHints/542/optimization-hints.pb
+ create mode 100644 rpi/boot/configcopy/.config/chromium/PKIMetadata/1442/_metadata/verified_contents.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/PKIMetadata/1442/crs.pb
+ create mode 100644 rpi/boot/configcopy/.config/chromium/PKIMetadata/1442/ct_config.pb
+ create mode 100644 rpi/boot/configcopy/.config/chromium/PKIMetadata/1442/kp_pinslist.pb
+ create mode 100644 rpi/boot/configcopy/.config/chromium/PKIMetadata/1442/manifest.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/SafetyTips/3083/_metadata/verified_contents.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/SafetyTips/3083/manifest.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/SafetyTips/3083/safety_tips.pb
+ create mode 100644 rpi/boot/configcopy/.config/chromium/TpcdMetadata/2025.9.27.1/_metadata/verified_contents.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/TpcdMetadata/2025.9.27.1/manifest.json
+ create mode 100644 rpi/boot/configcopy/.config/chromium/TpcdMetadata/2025.9.27.1/metadata.pb
+ create mode 100644 rpi/boot/configcopy/.config/chromium/component_crx_cache/075b849fbd2d3537cecab0fb70e95e499552d875392cd6488cadafbfd796013f
+ create mode 100644 rpi/boot/configcopy/.config/chromium/component_crx_cache/113f1692e1d1feb894b80deba16e59415a0203698010d2233104a5cb9fc9d97e
+ create mode 100644 rpi/boot/configcopy/.config/chromium/component_crx_cache/6031ef4c545e8f042190469b178fa76ca8f60777226226a73252b02901b18a4c
+ create mode 100644 rpi/boot/configcopy/.config/chromium/component_crx_cache/75eafda6e91b037c47ad1d0d43a65c905cb37b9e96026a71caf62cfdf4815924
+ create mode 100644 rpi/boot/configcopy/.config/chromium/component_crx_cache/78f1fe6e6efb3e273133cdcf220f11369efab035119b7b7721078ce509aa4935
+ create mode 100644 rpi/boot/configcopy/.config/chromium/component_crx_cache/a963062ea90e417932736e115d023b1f17f6c53c86b7fce492e010969dbbce02
+ create mode 100644 rpi/boot/configcopy/.config/chromium/component_crx_cache/ac839d10525a1578029daab1ba5bfc4679f6a4ccfc78f05600efa7fbbabdfae3
+Already up to date.
