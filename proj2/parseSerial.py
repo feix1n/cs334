@@ -2,13 +2,6 @@ import serial
 import time
 import threading
 
-from gpiozero import Button
-
-switchp1a = Button(14)
-switchp2a = Button(15)
-switchp1b = Button(23)
-switchp2a = Button(24)
-
 class ESP32Data:
     def __init__(self):
         self.momentary = False
@@ -86,3 +79,6 @@ def main():
             time.sleep(0.1) 
     except KeyboardInterrupt:
         print("Program interrupted, exiting...")
+        
+if __name__ == "__main__":
+    main()
