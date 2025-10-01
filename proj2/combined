@@ -1,0 +1,177 @@
+import serial
+import time
+import threading
+
+from gpiozero import Button
+
+selectplayerrole = True
+team1ready = False
+team2ready = False
+
+switchp1a = Button(14)
+switchp2a = Button(15)
+switchp1b = Button(23)
+switchp2b = Button(24)
+
+prevstatep1a = None
+prevstatep1b = None
+prevstatep2a = None
+prevstatep2b = None
+
+class ESP32Data:
+    def __init__(self):
+        self.momentary = False
+        self.joystick_sw = False
+        self.coordinates = []
+        self.buttonHeldTime = 0
+        self.is_ready = False  # Flag to track if the "Player is ready" message has been printed
+        self.playerRole = None
+
+    def __str__(self):
+        return f"Momentary: {self.momentary}, JoystickSW: {self.joystick_sw}, Coordinates: {self.coordinates}, Is Ready: {self.is_ready}, Role: {self.playerRole}"
+
+    def update_momentary(self, value):
+        self.momentary = value
+
+    def update_joystick_sw(self, value):
+        self.joystick_sw = value
+
+    def update_coordinates(self, x, y):
+        self.coordinates = [(x, y)]
+    
+    def update_playerRole(self, value):
+        if value == "block" or value == "tower":
+            self.playerRole = value
+
+def ready_state(esp32_data):
+    if esp32_data.momentary:
+        curr_time = time.time()
+        
+        if esp32_data.buttonHeldTime == 0:
+            esp32_data.buttonHeldTime = curr_time
+            print("Countdown started")
+        elif curr_time - esp32_data.buttonHeldTime >= 5:
+            if not esp32_data.is_ready: 
+                print("Player is ready")
+                esp32_data.is_ready = True  
+    else:
+        esp32_data.buttonHeldTime = 0
+        esp32_data.is_ready = False  
+
+def read_serial_data(serial_port, esp32_data):
+    try:
+        with serial.Serial(serial_port, 115200) as ser:
+            print(f"Reading from {serial_port}...")
+            while True:
+                if ser.in_waiting > 0: 
+                    line = ser.readline().decode('utf-8').strip() 
+                    if "Momentary" in line:
+                        if "On" in line:
+                            esp32_data.update_momentary(True)
+                        elif "Off" in line:
+                            esp32_data.update_momentary(False)
+                    elif "JoystickSW" in line:
+                        if "On" in line:
+                            esp32_data.update_joystick_sw(True)
+                        elif "Off" in line:
+                            esp32_data.update_joystick_sw(False)
+                    elif "x =" in line and "y =" in line:
+                        parts = line.split(',')
+                        x_value = int(parts[0].split('=')[1].strip())
+                        y_value = int(parts[1].split('=')[1].strip())
+                        esp32_data.update_coordinates(x_value, y_value)
+
+                    print(f"Data from {serial_port}: {esp32_data}")
+                time.sleep(0.1)  # Prevent busy-waiting (avoid high CPU usage)
+    except Exception as e:
+        print(f"Error reading serial data: {e}")
+
+def set_player_role(player1a, player1b, player2a, player2b):
+    global prevstatep1a, prevstatep1b, prevstatep2a, prevstatep2b
+    global team1ready, team2ready
+    
+    while selectplayerrole:
+        if(switchp1a.is_pressed != prevstatep1a or switchp1b.is_pressed != prevstatep1b or switchp2a.is_pressed != prevstatep2a or prevstatep2b != switchp2b.is_pressed):
+            if(switchp1a.is_pressed):
+                print("Team 1 Player 1 Block controller selected", end = " | ")
+                player1a.update_playerRole("block")
+            else:
+                print("Team 1 Player 1 tower controller selected", end = " | ")
+                player1a.update_playerRole("tower")
+            prevstatep1a = switchp1a.is_pressed
+            
+            if(switchp1b.is_pressed):
+                print("Team 1 Player 2 Block controller selected", end = "")
+                player1b.update_playerRole("block")
+            else:
+                print("Team 1 Player 2 tower controller selected", end = "")
+                player1b.update_playerRole("tower")
+            prevstatep1b = switchp1b.is_pressed
+            
+            if(switchp1a.is_pressed != switchp1b.is_pressed):
+                print("| Team READY")
+                team1ready = True
+            else:
+                print("| Select valid team combination")
+                team1ready = False
+            
+            if(switchp2a.is_pressed):
+                print("Team 2 Player 1 Block controller selected", end = " | ")
+                player2a.update_playerRole("block")
+            else:
+                print("Team 2 Player 1 tower controller selected", end = " | ")
+                player2a.update_playerRole("tower")
+            prevstatep2a = switchp2a.is_pressed
+            
+            if(switchp2b.is_pressed):
+                print("Team 2 Player 2 Block controller selected", end = "")
+                player2b.update_playerRole("block")
+            else:
+                print("Team 2 Player 2 tower controller selected", end = "")
+                player2b.update_playerRole("tower")
+            prevstatep2b = switchp2b.is_pressed
+            
+            if(switchp2a.is_pressed != switchp2b.is_pressed):
+                print("| Team READY")
+                team2ready = True
+            else:
+                print("| Select valid team combination")
+                team2ready = False
+                
+            # Print the current ESP32 data for both teams
+            print("\n--- Current Player Roles ---")
+            print(f"Team 1 Player 1: {player1a}")
+            print(f"Team 1 Player 2: {player1b}")
+            print(f"Team 2 Player 1: {player2a}")
+            print(f"Team 2 Player 2: {player2b}")
+            print("----------------------------\n")
+            
+        time.sleep(0.5)
+
+def main():
+    serial_ports = ['/dev/ttyUSB0', '/dev/ttyUSB1', '/dev/ttyUSB2', '/dev/ttyUSB3']
+    player1a = ESP32Data()
+    player1b = ESP32Data()
+    player2a = ESP32Data()
+    player2b = ESP32Data()
+
+    # Start a thread to read serial data
+    serial_thread = threading.Thread(target=read_serial_data, args=(serial_ports[0], player1a), daemon=True)
+    serial_thread.start()
+    
+    # Thread to read switch data
+    gpio_thread = threading.Thread(target=set_player_role, args=(player1a, player1b, player2a, player2b), daemon=True)
+    gpio_thread.start()
+
+    try:
+        while True:
+            global selectplayerrole
+            ready_state(player1a)
+            if (player1a.is_ready and team1ready and team2ready):
+                print("Game start!")
+            time.sleep(0.1) 
+    except KeyboardInterrupt:
+        print("Program interrupted, exiting...")
+        
+if __name__ == "__main__":
+    main()
