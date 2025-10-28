@@ -1438,3 +1438,7 @@ Fast-forward
  proj3/visuals.py | 100 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 100 insertions(+)
  create mode 100644 proj3/visuals.py
+[main 7d09065] update IP address
+ 5 files changed, 52 insertions(+), 1 deletion(-)
+ create mode 100644 proj3/notes
+ create mode 100644 proj3/pywifi.py
