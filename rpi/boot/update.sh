@@ -17,5 +17,5 @@ cp -r ~/.config ~/cs334/rpi/boot/configcopy
 cd ~/cs334
 git pull
 git add .
-git commit -m "update IP address"
+git commit -m "update on boot"
 git push origin
