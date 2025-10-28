@@ -1431,3 +1431,10 @@ Fast-forward
  create mode 100644 lab_logs/lab3/lab3
  create mode 100644 lab_logs/lab4/lab4
  create mode 100644 proj2/espjoystick.ino
+[main 66cfaa6] update IP address
+ 3 files changed, 15 insertions(+), 1 deletion(-)
+Updating 66cfaa6..9bc1907
+Fast-forward
+ proj3/visuals.py | 100 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 100 insertions(+)
+ create mode 100644 proj3/visuals.py
