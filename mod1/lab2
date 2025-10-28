@@ -1,4 +1,4 @@
-Writing Script to Update IP address:
+cd Writing Script to Update IP address:
 I learned that there can be no spaces between bash variables. I also added date so I could see when and what IP address I logged in on the pi and put the address on a new line so if I needed I can directly grep for it.
 
 Automating Script to run on boot:

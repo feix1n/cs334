@@ -34,7 +34,7 @@ drips = []
 last_drip_time = 0
 drip_interval = 100  # ms between new drips
 
-# Handle Ctrl+C
+# Handle Ctrl C
 def signal_handler(sig, frame):
     global running
     print("\nCtrl+C pressed, shutting down...")
@@ -72,7 +72,7 @@ def draw_text(screen, text, bg, panel_rect):
         rect = rendered.get_rect(center=(panel_rect.centerx, start_y + i * dynamic_font.get_linesize()))
         screen.blit(rendered, rect)
 
-# Draw drips on right panel - FIXED: Better drip generation
+# Draw drips on right panel
 def draw_drips(screen, panel_rect):
     global drips, last_drip_time, drip_color
     
@@ -85,17 +85,15 @@ def draw_drips(screen, panel_rect):
         # Gradually shrink drips
         drip['radius'] *= 0.998
     
-    # Add new drips at controlled intervals
+    # Make anywhere between 1-3 new drops every 100ms
     current_time = pygame.time.get_ticks()
     if current_time - last_drip_time > drip_interval and len(drips) < 150:
-        # Create 1-3 new drips
         for _ in range(random.randint(1, 3)):
             pos = (
                 random.randint(panel_rect.left + 50, panel_rect.right - 50),
                 random.randint(panel_rect.top + 50, panel_rect.bottom - 50)
             )
             radius = random.randint(15, 35)
-            # Add some variation to the color
             color_variation = random.randint(-20, 20)
             color = (
                 max(0, min(255, drip_color[0] + color_variation)),
@@ -109,7 +107,6 @@ def draw_drips(screen, panel_rect):
             })
         last_drip_time = current_time
 
-# Draw interface 
 def draw_interface(screen, text, bg):
     screen.fill((40, 40, 40))
     
@@ -128,7 +125,7 @@ def draw_interface(screen, text, bg):
     draw_drips(screen, right_panel)
     pygame.display.flip()
 
-# Parse incoming 
+# Parse data from ESP32
 def parse_rgb(line):
     match = re.match(r"RGB:\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", line)
     if match:
@@ -159,7 +156,7 @@ def adjust_color_with_pot(rgb, pot_val):
     except:
         return rgb
 
-# Server thread
+# Process the data from ESP32 in parallel to displayinh
 def server_thread():
     global message, bg_color, current_rgb, pot_value, running, drip_color, pot_mode_active
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -194,7 +191,8 @@ def server_thread():
                         if not line:
                             continue
                             
-                        print(f"Received: {line}")  # Debug logging
+                         # For me to see on laptop
+                        print(f"Received: {line}") 
                         
                         rgb = parse_rgb(line)
                         pot = parse_pot(line)
@@ -205,7 +203,7 @@ def server_thread():
                                 pot_value = pot
                                 adj_rgb = adjust_color_with_pot(current_rgb, pot)
                                 bg_color = adj_rgb
-                                drip_color = adj_rgb  # Update drip color too
+                                drip_color = adj_rgb
                                 message = f"Pot {pot} → HSV adjusted color"
                             elif rgb:
                                 current_rgb = rgb
@@ -214,7 +212,6 @@ def server_thread():
                                     drip_color = rgb
                                     message = f"RGB: {rgb[0]}, {rgb[1]}, {rgb[2]}"
                                 else:
-                                    # Add this: when we get RGB after pot mode, exit pot mode
                                     pot_mode_active = False
                                     bg_color = rgb
                                     drip_color = rgb
