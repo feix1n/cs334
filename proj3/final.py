@@ -3,8 +3,9 @@ import threading
 import pygame
 import sys
 import re
-import colorsys  # for RGB <-> HSV conversion
+import colorsys
 import signal
+import random
 
 HOST = ''
 PORT = 5000
@@ -12,18 +13,28 @@ PORT = 5000
 pygame.init()
 info = pygame.display.Info()
 screen_width, screen_height = info.current_w, info.current_h
-
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
 pygame.display.set_caption("ESP32 Color Sensor Display")
 
 message = "Waiting for ESP32..."
 bg_color = (30, 30, 30)
 current_rgb = (255, 255, 255)
+pot_value = 0
 lock = threading.Lock()
-pot_value = 0  # track the most recent pot reading
-running = True  # <-- shutdown flag
+running = True
 
-# --- Signal handler for Ctrl+C ---
+# panel dimensions
+left_panel_width = screen_width // 3
+right_panel_width = screen_width - left_panel_width
+
+# Drip art 
+drip_color = (255, 255, 255)
+pot_mode_active = False
+drips = []
+last_drip_time = 0
+drip_interval = 100  # ms between new drips
+
+# Handle Ctrl+C
 def signal_handler(sig, frame):
     global running
     print("\nCtrl+C pressed, shutting down...")
@@ -31,72 +42,132 @@ def signal_handler(sig, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 
-def draw_text(screen, text, bg):
-    screen.fill(bg)
-    width, height = screen.get_size()
 
-    # Dynamic font size: base on smaller of width/height
-    # This prevents text from being too wide or too tall
-    font_size = max(16, min(width, height) // 10)
+def draw_text(screen, text, bg, panel_rect):
+    font_size = max(16, min(panel_rect.width, panel_rect.height) // 15)
     dynamic_font = pygame.font.Font(None, font_size)
 
-    # Choose black or white text depending on background brightness
     brightness = (bg[0]*0.299 + bg[1]*0.587 + bg[2]*0.114)
     text_color = (255, 255, 255) if brightness < 128 else (0, 0, 0)
 
-    # Wrap text if it's too wide
     words = text.split(' ')
     lines = []
     current_line = ''
     for word in words:
         test_line = f"{current_line} {word}".strip()
-        if dynamic_font.size(test_line)[0] > width * 0.9:  # 90% of width
-            lines.append(current_line)
+        if dynamic_font.size(test_line)[0] > panel_rect.width * 0.8:
+            if current_line:
+                lines.append(current_line)
             current_line = word
         else:
             current_line = test_line
-    lines.append(current_line)
+    if current_line:
+        lines.append(current_line)
 
-    # Draw each line centered
     total_height = len(lines) * dynamic_font.get_linesize()
-    start_y = (height - total_height) // 2
+    start_y = panel_rect.centery - total_height // 2
+
     for i, line in enumerate(lines):
         rendered = dynamic_font.render(line, True, text_color)
-        rect = rendered.get_rect(center=(width // 2, start_y + i * dynamic_font.get_linesize() + dynamic_font.get_linesize() // 2))
+        rect = rendered.get_rect(center=(panel_rect.centerx, start_y + i * dynamic_font.get_linesize()))
         screen.blit(rendered, rect)
 
+# Draw drips on right panel - FIXED: Better drip generation
+def draw_drips(screen, panel_rect):
+    global drips, last_drip_time, drip_color
+    
+    # Remove old drips that are too small
+    drips = [drip for drip in drips if drip['radius'] > 0.5]
+    
+    # Draw all existing drips
+    for drip in drips:
+        pygame.draw.circle(screen, drip['color'], drip['pos'], drip['radius'])
+        # Gradually shrink drips
+        drip['radius'] *= 0.998
+    
+    # Add new drips at controlled intervals
+    current_time = pygame.time.get_ticks()
+    if current_time - last_drip_time > drip_interval and len(drips) < 150:
+        # Create 1-3 new drips
+        for _ in range(random.randint(1, 3)):
+            pos = (
+                random.randint(panel_rect.left + 50, panel_rect.right - 50),
+                random.randint(panel_rect.top + 50, panel_rect.bottom - 50)
+            )
+            radius = random.randint(15, 35)
+            # Add some variation to the color
+            color_variation = random.randint(-20, 20)
+            color = (
+                max(0, min(255, drip_color[0] + color_variation)),
+                max(0, min(255, drip_color[1] + color_variation)),
+                max(0, min(255, drip_color[2] + color_variation))
+            )
+            drips.append({
+                'pos': pos, 
+                'radius': radius, 
+                'color': color
+            })
+        last_drip_time = current_time
+
+# Draw interface 
+def draw_interface(screen, text, bg):
+    screen.fill((40, 40, 40))
+    
+    # Left panel (color display)
+    left_panel = pygame.Rect(0, 0, left_panel_width, screen_height)
+    pygame.draw.rect(screen, bg, left_panel)
+    
+    # Right panel (drip art)
+    right_panel = pygame.Rect(left_panel_width, 0, right_panel_width, screen_height)
+    pygame.draw.rect(screen, (20, 20, 20), right_panel)  # Darker background for contrast
+    
+    # Divider line
+    pygame.draw.line(screen, (100, 100, 100), (left_panel_width, 0), (left_panel_width, screen_height), 2)
+    
+    draw_text(screen, text, bg, left_panel)
+    draw_drips(screen, right_panel)
     pygame.display.flip()
 
-
+# Parse incoming 
 def parse_rgb(line):
-    match = re.match(r"RGB:\s*(\d+),\s*(\d+),\s*(\d+)", line)
+    match = re.match(r"RGB:\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", line)
     if match:
-        r, g, b = [int(x) for x in match.groups()]
-        return (r, g, b)
+        try:
+            return tuple(int(x) for x in match.groups())
+        except ValueError:
+            return None
     return None
 
 def parse_pot(line):
     match = re.match(r"Pot:\s*(\d+)", line)
     if match:
-        return int(match.group(1))
+        try:
+            return int(match.group(1))
+        except ValueError:
+            return None
     return None
 
 def adjust_color_with_pot(rgb, pot_val):
-    """Adjust saturation using pot value (0–4095 → 0–1)."""
-    h, s, v = colorsys.rgb_to_hsv(rgb[0]/255, rgb[1]/255, rgb[2]/255)
-    s = pot_val / 4095.0  # map pot value directly to saturation
-    s = max(0.0, min(1.0, s))
-    r, g, b = colorsys.hsv_to_rgb(h, s, v)
-    return (int(r*255), int(g*255), int(b*255))
+    if not rgb or len(rgb) != 3:
+        return rgb
+        
+    try:
+        h, s, v = colorsys.rgb_to_hsv(rgb[0]/255.0, rgb[1]/255.0, rgb[2]/255.0)
+        s = max(0.0, min(1.0, pot_val / 4095.0))
+        r, g, b = colorsys.hsv_to_rgb(h, s, v)
+        return (int(r*255), int(g*255), int(b*255))
+    except:
+        return rgb
 
+# Server thread
 def server_thread():
-    global message, bg_color, current_rgb, pot_value, running
+    global message, bg_color, current_rgb, pot_value, running, drip_color, pot_mode_active
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((HOST, PORT))
     server_socket.listen(1)
-    server_socket.settimeout(1.0)  # timeout to check `running`
-    print(f"Listening for ESP32 on port {PORT}...")
+    server_socket.settimeout(0.5)
+    print(f"Listening on port {PORT}...")
 
     while running:
         try:
@@ -104,10 +175,11 @@ def server_thread():
         except socket.timeout:
             continue
         except OSError:
-            break  # socket closed
+            break
         print(f"Connected: {addr}")
 
         with conn:
+            conn.settimeout(0.5)
             buffer = ""
             while running:
                 try:
@@ -115,30 +187,42 @@ def server_thread():
                     if not data:
                         print("Client disconnected.")
                         break
-
-                    buffer += data.decode()
+                    buffer += data.decode(errors='ignore')
                     while '\n' in buffer:
                         line, buffer = buffer.split('\n', 1)
                         line = line.strip()
                         if not line:
                             continue
-
-                        print(line)
+                            
+                        print(f"Received: {line}")  # Debug logging
+                        
                         rgb = parse_rgb(line)
                         pot = parse_pot(line)
-
+                        
                         with lock:
-                            if rgb:
-                                current_rgb = rgb
-                                bg_color = rgb
-                                message = f"RGB: {rgb[0]}, {rgb[1]}, {rgb[2]}"
-                            elif pot is not None:
+                            if pot is not None:
+                                pot_mode_active = True
                                 pot_value = pot
                                 adj_rgb = adjust_color_with_pot(current_rgb, pot)
                                 bg_color = adj_rgb
+                                drip_color = adj_rgb  # Update drip color too
                                 message = f"Pot {pot} → HSV adjusted color"
+                            elif rgb:
+                                current_rgb = rgb
+                                if not pot_mode_active:
+                                    bg_color = rgb
+                                    drip_color = rgb
+                                    message = f"RGB: {rgb[0]}, {rgb[1]}, {rgb[2]}"
+                                else:
+                                    # Add this: when we get RGB after pot mode, exit pot mode
+                                    pot_mode_active = False
+                                    bg_color = rgb
+                                    drip_color = rgb
                             else:
                                 message = line
+                                    
+                except socket.timeout:
+                    continue
                 except (ConnectionResetError, ConnectionAbortedError):
                     print("Connection lost.")
                     break
@@ -149,32 +233,30 @@ def server_thread():
     server_socket.close()
     print("Server thread shutting down.")
 
-# --- Start server thread ---
-thread = threading.Thread(target=server_thread)
+# Start server thread
+thread = threading.Thread(target=server_thread, daemon=True)
 thread.start()
 
-# --- Main pygame loop ---
+# Main loop - FIXED: Better event handling
 clock = pygame.time.Clock()
 try:
     while running:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT: 
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    running = False  # exit fullscreen cleanly
-            elif event.type == pygame.VIDEORESIZE:
-                # Update screen if windowed mode is used
-                screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
-
+                    running = False
+                elif event.key == pygame.K_c:
+                    # Clear drips with 'c' key
+                    with lock:
+                        drips.clear()
 
         with lock:
-            draw_text(screen, message, bg_color)
+            draw_interface(screen, message, bg_color)
 
         clock.tick(60)
 finally:
-    # --- Clean shutdown ---
     running = False
-    thread.join()
     pygame.quit()
     sys.exit(0)
