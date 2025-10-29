@@ -4628,3 +4628,7 @@ Fast-forward
 [main eff2ee4] update on boot
  3 files changed, 3182 insertions(+), 1 deletion(-)
 Already up to date.
+[main 20e8cde] update on boot
+ 4 files changed, 10 insertions(+), 1 deletion(-)
+ create mode 100755 mod3/proj3/automateSensor.sh
+Already up to date.
