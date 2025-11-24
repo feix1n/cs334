@@ -7061,3 +7061,7 @@ Already up to date.
  create mode 120000 finalproj/env/lib64
  create mode 100644 finalproj/env/pyvenv.cfg
 Already up to date.
+[main 71ff2c5] update on boot
+ 3 files changed, 2426 insertions(+)
+ create mode 100644 finalproj/POS58printer.py
+Already up to date.
