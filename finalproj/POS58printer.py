@@ -1,3 +1,4 @@
+# install escpos using command pip3 install escpos
 from escpos.printer import Usb
 
 # 0x0416 and 0x5011 are the details we extracted from lsusb
